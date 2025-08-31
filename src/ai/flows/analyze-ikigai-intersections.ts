@@ -21,11 +21,11 @@ const AnalyzeIkigaiIntersectionsInputSchema = z.object({
 export type AnalyzeIkigaiIntersectionsInput = z.infer<typeof AnalyzeIkigaiIntersectionsInputSchema>;
 
 const AnalyzeIkigaiIntersectionsOutputSchema = z.object({
-  passion: z.string().describe('Analysis of the intersection between what you love and what you are good at, with citations.'),
-  mission: z.string().describe('Analysis of the intersection between what you love and what the world needs, with citations.'),
-  vocation: z.string().describe('Analysis of the intersection between what you are good at and what you can be paid for, with citations.'),
-  profession: z.string().describe('Analysis of the intersection between what the world needs and what you can be paid for, with citations.'),
-  ikigai: z.string().describe('Overall analysis of the Ikigai intersection, combining all four components, with citations.'),
+  passion: z.string().describe('Analysis of the intersection between what you love and what you are good at.'),
+  mission: z.string().describe('Analysis of the intersection between what you love and what the world needs.'),
+  vocation: z.string().describe('Analysis of the intersection between what you are good at and what you can be paid for.'),
+  profession: z.string().describe('Analysis of the intersection between what the world needs and what you can be paid for.'),
+  ikigai: z.string().describe('Overall analysis of the Ikigai intersection, combining all four components.'),
 });
 export type AnalyzeIkigaiIntersectionsOutput = z.infer<typeof AnalyzeIkigaiIntersectionsOutputSchema>;
 
@@ -44,7 +44,7 @@ const prompt = ai.definePrompt({
   - What you are good at
   - What you can be paid for
 
-  Analyze the user's responses below and identify potential Ikigai intersections, providing explanations for each intersection with citations to relevant Ikigai resources. Explain each of the 4 intersections (passion, mission, vocation, profession) with supporting citations, and the overall Ikigai.
+  Analyze the user's responses below and identify potential Ikigai intersections, providing explanations for each intersection. Explain each of the 4 intersections (passion, mission, vocation, profession), and the overall Ikigai.
 
   What you love: {{{whatYouLove}}}
   What the world needs: {{{whatTheWorldNeeds}}}
