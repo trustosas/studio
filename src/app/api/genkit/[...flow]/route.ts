@@ -1,5 +1,5 @@
 // src/app/api/genkit/[...flow]/route.ts
-import { nextHandler } from '@genkit-ai/next';
+import { createNextHandler } from '@genkit-ai/next';
 import '@/ai/flows/analyze-ikigai-intersections';
 
-export const POST = nextHandler();
+export const POST = createNextHandler();
