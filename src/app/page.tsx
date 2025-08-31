@@ -1,19 +1,20 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Questionnaire } from '@/components/ikigai/Questionnaire';
 import { AnalysisReport } from '@/components/ikigai/AnalysisReport';
-import { analyzeIkigaiIntersections, type AnalyzeIkigaiIntersectionsInput, type AnalyzeIkigaiIntersectionsOutput } from '@/ai/flows/analyze-ikigai-intersections';
+import { analyzeIkigaiIntersections, type AnalyzeIkigaiIntersectionsOutput } from '@/ai/flows/analyze-ikigai-intersections';
 import { useToast } from "@/hooks/use-toast";
 import { Loader } from 'lucide-react';
+import { allQuestions } from '@/components/ikigai/data';
+
+export type IkigaiResponses = {
+  [key: string]: string;
+};
 
 export default function Home() {
-  const [responses, setResponses] = useState<AnalyzeIkigaiIntersectionsInput>({
-    whatYouLove: '',
-    whatYouAreGoodAt: '',
-    whatTheWorldNeeds: '',
-    whatYouCanBePaidFor: '',
-  });
+  const [responses, setResponses] = useState<IkigaiResponses>({});
   const [analysis, setAnalysis] = useState<AnalyzeIkigaiIntersectionsOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -23,28 +24,35 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true);
     try {
-      const savedResponses = {
-        whatYouLove: localStorage.getItem('ikigai-whatYouLove') || '',
-        whatYouAreGoodAt: localStorage.getItem('ikigai-whatYouAreGoodAt') || '',
-        whatTheWorldNeeds: localStorage.getItem('ikigai-whatTheWorldNeeds') || '',
-        whatYouCanBePaidFor: localStorage.getItem('ikigai-whatYouCanBePaidFor') || '',
-      };
+      const savedResponses: IkigaiResponses = {};
+      allQuestions.forEach((q, index) => {
+        savedResponses[`q${index}`] = localStorage.getItem(`ikigai-q${index}`) || '';
+      });
       setResponses(savedResponses);
     } catch (error) { console.error("Failed to load from localStorage", error); }
   }, []);
 
-  const handleResponseChange = (key: keyof AnalyzeIkigaiIntersectionsInput, value: string) => {
-    const newResponses = { ...responses, [key]: value };
+  const handleResponseChange = (questionIndex: number, value: string) => {
+    const questionKey = `q${questionIndex}`;
+    const newResponses = { ...responses, [questionKey]: value };
     setResponses(newResponses);
     try {
-      localStorage.setItem(`ikigai-${key}`, value);
+      localStorage.setItem(`ikigai-${questionKey}`, value);
     } catch (error) { console.error("Failed to save to localStorage", error); }
   };
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
+
+    const aggregatedResponses = {
+        whatYouLove: allQuestions.map((q, i) => q.key === 'whatYouLove' ? responses[`q${i}`] : '').filter(Boolean).join('\\n- '),
+        whatYouAreGoodAt: allQuestions.map((q, i) => q.key === 'whatYouAreGoodAt' ? responses[`q${i}`] : '').filter(Boolean).join('\\n- '),
+        whatTheWorldNeeds: allQuestions.map((q, i) => q.key === 'whatTheWorldNeeds' ? responses[`q${i}`] : '').filter(Boolean).join('\\n- '),
+        whatYouCanBePaidFor: allQuestions.map((q, i) => q.key === 'whatYouCanBePaidFor' ? responses[`q${i}`] : '').filter(Boolean).join('\\n- '),
+    };
+
     try {
-      const result = await analyzeIkigaiIntersections(responses);
+      const result = await analyzeIkigaiIntersections(aggregatedResponses);
       setAnalysis(result);
     } catch (error) {
       console.error("AI analysis failed:", error);
@@ -55,13 +63,16 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    const clearedResponses = {
-      whatYouLove: '', whatYouAreGoodAt: '', whatTheWorldNeeds: '', whatYouCanBePaidFor: '',
-    };
+    const clearedResponses: IkigaiResponses = {};
+    allQuestions.forEach((_q, index) => {
+      clearedResponses[`q${index}`] = '';
+    });
     setResponses(clearedResponses);
     setAnalysis(null);
     try {
-      Object.keys(clearedResponses).forEach(key => localStorage.removeItem(`ikigai-${key}`));
+      allQuestions.forEach((_q, index) => {
+        localStorage.removeItem(`ikigai-q${index}`);
+      });
     } catch (error) { console.error("Failed to clear localStorage", error); }
   };
   

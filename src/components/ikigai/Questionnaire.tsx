@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -6,12 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight, Loader, Sparkles } from 'lucide-react';
-import { promptsData } from './data';
-import type { AnalyzeIkigaiIntersectionsInput } from '@/ai/flows/analyze-ikigai-intersections';
+import { allQuestions, promptsData } from './data';
+import type { IkigaiResponses } from '@/app/page';
 
 interface QuestionnaireProps {
-  responses: AnalyzeIkigaiIntersectionsInput;
-  onResponseChange: (key: keyof AnalyzeIkigaiIntersectionsInput, value: string) => void;
+  responses: IkigaiResponses;
+  onResponseChange: (questionIndex: number, value: string) => void;
   onAnalyze: () => Promise<void>;
   isAnalyzing: boolean;
 }
@@ -19,10 +20,10 @@ interface QuestionnaireProps {
 export function Questionnaire({ responses, onResponseChange, onAnalyze, isAnalyzing }: QuestionnaireProps) {
     const [currentStep, setCurrentStep] = useState(0);
 
-    const progress = useMemo(() => ((currentStep + 1) / promptsData.length) * 100, [currentStep]);
+    const progress = useMemo(() => ((currentStep + 1) / allQuestions.length) * 100, [currentStep]);
 
     const handleNext = () => {
-        if (currentStep < promptsData.length - 1) {
+        if (currentStep < allQuestions.length - 1) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -33,8 +34,9 @@ export function Questionnaire({ responses, onResponseChange, onAnalyze, isAnalyz
         }
     };
     
-    const currentPrompt = promptsData[currentStep];
-    const CurrentIcon = currentPrompt.icon;
+    const currentPromptData = allQuestions[currentStep];
+    const CurrentIcon = currentPromptData.icon;
+    const currentCategoryIndex = promptsData.findIndex(p => p.key === currentPromptData.key);
 
     return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6">
@@ -48,8 +50,8 @@ export function Questionnaire({ responses, onResponseChange, onAnalyze, isAnalyz
           <Progress value={progress} className="w-full h-3 transition-all duration-500" />
           <div className="flex justify-between text-sm text-muted-foreground mt-2">
             {promptsData.map((p, index) => (
-                <div key={p.key} className={`flex items-center gap-1 ${index <= currentStep ? 'font-bold text-foreground' : ''}`}>
-                    <p.icon className={`w-4 h-4 ${index <= currentStep ? 'text-accent' : ''}`} />
+                <div key={p.key} className={`flex items-center gap-1 ${index <= currentCategoryIndex ? 'font-bold text-foreground' : ''}`}>
+                    <p.icon className={`w-4 h-4 ${index <= currentCategoryIndex ? 'text-accent' : ''}`} />
                     <span>{p.title}</span>
                 </div>
             ))}
@@ -60,21 +62,16 @@ export function Questionnaire({ responses, onResponseChange, onAnalyze, isAnalyz
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <CurrentIcon className="w-8 h-8 text-accent" />
-              {currentPrompt.title}
+              {currentPromptData.title}
             </CardTitle>
             <CardDescription>
-              Answer the prompts below to the best of your ability. There are no right or wrong answers.
+              {currentPromptData.question}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="list-disc list-inside space-y-2 mb-4 text-muted-foreground">
-              {currentPrompt.questions.map((q, i) => (
-                <li key={i}>{q}</li>
-              ))}
-            </ul>
             <Textarea
-              value={responses[currentPrompt.key]}
-              onChange={(e) => onResponseChange(currentPrompt.key, e.target.value)}
+              value={responses[`q${currentStep}`] || ''}
+              onChange={(e) => onResponseChange(currentStep, e.target.value)}
               placeholder="Let your thoughts flow..."
               className="min-h-[250px] text-base resize-y"
             />
@@ -83,7 +80,7 @@ export function Questionnaire({ responses, onResponseChange, onAnalyze, isAnalyz
             <Button onClick={handlePrev} disabled={currentStep === 0} variant="outline">
               <ArrowLeft className="mr-2" /> Previous
             </Button>
-            {currentStep < promptsData.length - 1 ? (
+            {currentStep < allQuestions.length - 1 ? (
               <Button onClick={handleNext}>
                 Next <ArrowRight className="ml-2" />
               </Button>
